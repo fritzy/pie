@@ -75,8 +75,7 @@ Channels consist of the following components:
 ### Message History
 ### Keys
 ### Caching and Revisions
-### Jobs
-#### User Interaction with Jobs
+### Message Claims
 
 ### Example Channel Configuration
 
@@ -126,42 +125,84 @@ Channels consist of the following components:
 # Example Wire
 
 
-<--
+IN
 
-    {"from": "montague.com", "version": "alpha1", "to": "aabbccddee",
-        "session_capabilities": [
-            "SASL-PLAIN", "SASL-OAUTH"
-        ]
-    }
-
--->
-
-    {"from": "aabbccddee", "to": "montague.com", "id": "auth1"
-        "SASL": {"sasl-mech": "SASL-PLAIN", "response": "base64 thingy"}
-    }
-
-<--
-
-    {"from": "montague.com", "to": "montague.com", "id", "auth1",
-        "SASL": {"outcome": "ok"}
-    }
-
-<--
-
-    {"from": "montague.com", "version": "alpha1", "to": "aabbccddee",
-        "session_capabilities": ["bind", "session-restore"]
+    {"from": "montague.com/stream/aabbccddee", "version": "alpha1", "to": "aabbccddee",
+        "msg": {
+            "ns": "http://otalk.com/p/session-capabilities",
+            "session_capabilities": [
+                "SASL-PLAIN", "SASL-OAUTH"
+            ]
         }
     }
 
--->
+OUT
 
-    {"from" "aabbccddee", "to": "montague.com",
-        "bind": {"oid": "romeo@montague.com/sess/Window"}
+    {"to": "montague.com/stream/aabbccddee", "id": "auth1",
+        "query": {
+            "ns": "SASL",
+            "sasl-mech": "SASL-PLAIN", "response": "base64 thingy"
+        }
     }
 
-<--
+IN
 
-    {"from": "montague.com", "to": "aabbccddee",
-        "bind": {"oid": "romeo@montague.com/sess/Window_aabb"},
-        "outcome": "ok"
+    {"from": "montague.com/stream/aabbccddee", "id": "auth1",
+        "response": {
+            "ns": "SASL",
+            "outcome": "ok"
+        }
+    }
+
+IN
+
+    {"from": "montague.com/stream/aabbccddee", "version": "alpha1", "to": "aabbccddee",
+        "msg": {
+            "ns": "http://otalk.com/p/session-capabilities",
+            "session_capabilities": ["bind", "session-restore"]
+        }
+    }
+
+OUT
+
+    {"from" "aabbccddee", "to": "montague.com/stream/aabbccddee", "id": "bind1",
+        "query": {
+            "ns": "http://otalk.com/p/bind",
+            "bind": "romeo@montague.com/sess/Window"
+        }
+    }
+
+IN
+
+    {"from": "montague.com/stream/aabbccddee", "to": "aabbccddee", "id": "bind1",
+        "response": {
+            "bind": "romeo@montague.com/sess/Window_aabb"
+        }
+    }
+
+OUT
+    
+    {"to": "romeo@montague.com/subscriptions", "id": "getsub1",
+        "get": {
+            "offset": 0,
+            "limit": 50
+        }
+    }
+
+IN
+
+    {"to": "romeo@montague.com/sess/Window_aabb", "from": "romeo@montague.com/subscriptions", "id": "getsub1",
+        "result": {
+            "offset": 0,
+            "limit": 50,
+            "total": 2,
+            "results": [
+                {
+                    "id": "s0", "from": "romeo@montague.com/roster/*", "to": "romeo@montague.com", "last_id": "ablakjsdf", "last_update": "TZ", "status": "active"
+                },
+                {
+                    "id": "s1", "from": "romeo@montague.com/inbox", "to": "romeo@montague.com", "last_id": "ablakjsdf", "last_update": "TZ", "status": "active"
+                }
+            ]
+        }
     }

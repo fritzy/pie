@@ -1,10 +1,10 @@
 # oTalk Protocol Spec
 
-##Overview
+#Overview
 oTalk is a federated messaging, publishing, and eventing protocol written for the modern Internet and with the web platform in mind. It is based on the lessons and knowledge of, and designed to federate with, XMPP.
 Since most features in XMPP can be distilled into a publish/store-subscribe pattern, oTalk establishes a flexible publish-subscribe system based on strong identity, and implements features like IM, roster, presence, service-discovery, and multi-user chat on conventions for creating, configuring, and using publish-subscribe channels.
 
-## Identity URI
+# Identity URI
 An identity uri consists of a user node, a server node, a channel path, and query parameters.
 The only required node in an identity URI is the server node.
 
@@ -14,7 +14,7 @@ An example URI might look like:
 
 Query parameters include key, config, and msgid.
 
-## Establishing a Connection (Client to Server)
+# Establishing a Connection (Client to Server)
 
 Servers should support connections over websocket or TCP socket.
 UTF-8 encoded JSON stanzas seperated by null (\x00) characters.
@@ -22,25 +22,26 @@ A TCP socket connection may negotiate gzip steaming and TLS.
 
 [in progress]
 
-### Authentication
+## Authentication
 
-* SASL
+* SASL (PLAIN, SCRAM-SHA1, OAUTH)
 * Session Binding
 
-## Initial Channels
+# Initial Channels
 
-/
+/  
 /roster/  
 /sess/  
 /presence/  
 /discovery/  
-/inbox
-/incoming-request
-/outgoing-request
+/inbox  
+/subscriptions  
+/incoming-request  
+/outgoing-request  
 
 In addition, each connected session will be bound to a channel under /sess/ with each containing the latter channels as well.
 
-### / The Root Channel
+## / The Root Channel
 ### /sess/ The Session Channel
 ### /presence/ The Presence Channel
 ### /discovery/ The Discovery Channel (wait, what?)
@@ -70,6 +71,219 @@ Channels consist of the following components:
 * keys
 * sub-channels
 * configuration
+
+### Creating a Channel
+
+OUT
+    {to, from, id
+        query: {
+            ns: http://otalk.com/p/create,
+            channel: otalk:user@server/channel/subchannel
+            config: {
+            }
+        }
+    }
+
+IN
+
+    {to, from, id
+        response: {
+        }
+    }
+
+OR
+
+    {to, from, id
+        error: {
+        }
+    }
+
+Event for users of the parent channel:
+
+    {to, from: user@server/channel, id,
+        msg: {
+            ns: http://otalk.com/p/event
+            channel: otalk:user@server/channel/subchannel
+            event: {
+                ns: http://otalk.com/p/create
+            }
+        }
+    }
+
+### Deleting a Channel
+
+OUT
+    {to, from, id
+        query: {
+            ns: http://otalk.com/p/delete,
+            channel: otalk:user@server/channel/subchannel
+            config: {
+            }
+        }
+    }
+
+IN
+
+    {to, from, id
+        response: {
+        }
+    }
+
+OR
+
+    {to, from, id
+        error: {
+        }
+    }
+
+Event for users of the parent channel:
+
+    {to, from: user@server/channel, id,
+        msg: {
+            ns: http://otalk.com/p/event
+            channel: otalk:user@server/channel/subchannel
+            event: {
+                ns: http://otalk.com/p/delete
+            }
+        }
+    }
+
+### Getting Channel Contents
+
+Send a "get" to the channel you'd like to get messages from. You may you use \* wildcards.
+You may also specify ?keys ?channels ?messages, or a combination.
+You may also get subscriptions, if you have permission, with ?subscriptions
+You may also specify ?msgid= and ?key= to get a specific message.
+You may filter by a specific message namespace with ?ns=
+Each result will contain the fields "from", "time", "msg", "channel", and "id" and may contain "key" and "claim" sections
+
+You can specify an offset, limit, since\_id, since\_time, until\_id, until\_time.
+
+OUT
+    
+    {"to": "romeo@montague.com/channel/subchannel", "id": "getmsg1",
+        "get": {
+            "offset": 0,
+            "limit": 50
+        }
+    }
+
+IN
+
+    {"to": "romeo@montague.com/sess/Window_aabb", "from": "romeo@montague.com/channel/subchannel", "id": "getsub1",
+        "result": {
+            "offset": 0,
+            "limit": 50,
+            "total": 2,
+            "results": [
+                {
+                    msg: {
+                        ns: http://otalk.com/p/chat,
+                        body: "How's it going?"
+                        lang: "En"
+                    },
+                    channel: "romeo@montague.com/channel/subchannel",
+                    time:...,
+                    id: asdfasdf,
+                    from: juliet@capulet.com/sess/weeee
+                },
+                {
+                    msg: {
+                        ns: http://otalk.com/p/chat,
+                        body: "Oh, not too shabby"
+                        lang: "En"
+                    },
+                    channel: "romeo@montague.com/channel/subchannel",
+                    time:....,
+                    id: asddsff,
+                    from: romeo@montague.com/sess/Window_aabb
+                }
+            ]
+        }
+    }
+
+
+### Subscribing to a Channel
+
+You can subscribe to a channel, or a pattern of channels using \* wildcards.
+You may recieve an error, a result, or a pending notification.
+If you specify a from, you are linking the from channel with the to channel. Meaning all messages will get sent to the from channel.
+
+OUT
+
+    {to: romeo@montague.com/channel/subchannel, id: sub1,
+        query: {
+            ns: http://otalk.com/p/subscribe,
+        }
+    }
+
+IN
+
+    {from: romeo@montague.com/channel/subchannel, id: sub1,
+        response: {
+            ns: http://otalk.com/p/subscribe,
+            result: ok
+        }
+    }
+
+OR
+    
+    {from: romeo@montague.com/channel/subchannel, id: sub1,
+        response: {
+            ns: http://otalk.com/p/subscribe,
+            result: error
+            error: {
+                code: xxx,
+                text: error text
+            }
+        }
+    }
+
+OR
+   
+    {from: romeo@montague.com/channel/subchannel, id: sub1,
+        response: {
+            ns: http://otalk.com/p/subscribe,
+            result: pending
+            pending: {
+                channel: romeo@montague.com/requests
+                id: sdfjs
+            }
+        }
+    }
+
+See the "Job and Queues" Section.
+
+NOTE: when a subscription is successfully updated, your and the other endpoint's /subscriptions/ channels will be updated by the server, and you may get events from them.
+
+### Unsubscribing a Channel
+
+OUT
+
+    {to: romeo@montague.com/channel/subchannel, id: sub1,
+        query: {
+            ns: http://otalk.com/p/unsubscribe,
+        }
+    }
+
+IN
+
+    {from: romeo@montague.com/channel/subchannel, id: sub1,
+        response: {
+            ns: http://otalk.com/p/unsubscribe,
+            result: ok
+        }
+    }
+
+### Getting Subscriptions
+
+To get the subscriptions (at least the ones you have access to) from a channel see  "Getting Channel Contents"
+To see all of your own subscriptions, get the messages from your own /subscriptions channel.
+To see all of your subscriptions at a user@server node, query their /subscriptions channel for messages. You probably only have access to see your own subscriptions in there.
+
+### Jobs and Queues
+
+### The /requests/ Channel
 
 ### Subscriptions
 ### Message History
@@ -108,17 +322,34 @@ Channels consist of the following components:
             diff: true,
             playback: true
         },
-        jobs: {
-            enabled: true,
+        queue: {
+            finished_enabled: true,
+            claim_enabled: true,
+            delete_on_finish: true,
             claim_timeout,
             cancel_limit,
             failed_channel,
         },
+        feature_tags: ["list", "of", "feature", "namespaces"],
         owner: user@server/channel/path,
         echo: false,
         channel_whitelist: []
         channel_blacklist: []
         channel_tempban: [{user: '', time: 0},]
+        update: checksum/full/notify
+    }
+
+### Example Subscription Configuration
+
+    {
+        from_uri: "otalk:romeo@montague.com/sess/*/presence/*",
+        to_uri: "otalk:juliet@capulet.com/roster/Romeo",
+        limit_tags: ["list", "of", "acceptable", "feature", "tags"],
+        sd_filter: true,
+        mute: false,
+        mute_on_offline: false,
+        //this is a recursive subscription, but is limited to channels that include one of the feature tags listed
+        //a server may update this list based on the service discovery profile
     }
 
 

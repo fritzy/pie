@@ -57,6 +57,7 @@ Channels consist of the following components:
 ## Creating a Channel
 
 OUT
+
     {to, from, id
         query: {
             ns: http://otalk.com/p/create,

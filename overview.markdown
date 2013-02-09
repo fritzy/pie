@@ -27,29 +27,7 @@ A TCP socket connection may negotiate gzip steaming and TLS.
 * SASL (PLAIN, SCRAM-SHA1, OAUTH)
 * Session Binding
 
-# Initial Channels
-
-/  
-/roster/  
-/sess/  
-/presence/  
-/discovery/  
-/inbox  
-/subscriptions  
-/incoming-request  
-/outgoing-request  
-
-In addition, each connected session will be bound to a channel under /sess/ with each containing the latter channels as well.
-
-## / The Root Channel
-### /sess/ The Session Channel
-### /presence/ The Presence Channel
-### /discovery/ The Discovery Channel (wait, what?)
-### /inbox/ The Inbox Channel
-
-## Routing
-
-## Stanzas
+#Stanzas
 All stanzas consist of an outer layer for routing.
 Fields:
 
@@ -62,7 +40,7 @@ The "from" is *always* rewritten by the server when sending a message as the [us
 If the server is rebroadcasting a message 
 
 
-## Channels
+# Channels
 Publish-Subscribe Channels, or just channels as we'll refer to them from here on, are the core of the oTalk protocol. All interactions between endpoints happen in channels. As such, channels need to be rather flexible.
 
 Channels consist of the following components:
@@ -72,7 +50,9 @@ Channels consist of the following components:
 * sub-channels
 * configuration
 
-### Creating a Channel
+## Channel Patterns
+
+## Creating a Channel
 
 OUT
     {to, from, id
@@ -110,7 +90,7 @@ Event for users of the parent channel:
         }
     }
 
-### Deleting a Channel
+## Deleting a Channel
 
 OUT
     {to, from, id
@@ -148,7 +128,7 @@ Event for users of the parent channel:
         }
     }
 
-### Getting Channel Contents
+## Getting Channel Contents
 
 Send a "get" to the channel you'd like to get messages from. You may you use \* wildcards.
 You may also specify ?keys ?channels ?messages, or a combination.
@@ -203,17 +183,19 @@ IN
     }
 
 
-### Subscribing to a Channel
+## Subscribing to a Channel
 
 You can subscribe to a channel, or a pattern of channels using \* wildcards.
 You may recieve an error, a result, or a pending notification.
 If you specify a from, you are linking the from channel with the to channel. Meaning all messages will get sent to the from channel.
+You may specify feature tags, which filters any wildcard channel subscriptions.
 
 OUT
 
     {to: romeo@montague.com/channel/subchannel, id: sub1,
         query: {
             ns: http://otalk.com/p/subscribe,
+            feature_tags: []
         }
     }
 
@@ -256,7 +238,7 @@ See the "Job and Queues" Section.
 
 NOTE: when a subscription is successfully updated, your and the other endpoint's /subscriptions/ channels will be updated by the server, and you may get events from them.
 
-### Unsubscribing a Channel
+## Unsubscribing a Channel
 
 OUT
 
@@ -275,21 +257,24 @@ IN
         }
     }
 
-### Getting Subscriptions
+## Getting Subscriptions
 
 To get the subscriptions (at least the ones you have access to) from a channel see  "Getting Channel Contents"
 To see all of your own subscriptions, get the messages from your own /subscriptions channel.
 To see all of your subscriptions at a user@server node, query their /subscriptions channel for messages. You probably only have access to see your own subscriptions in there.
 
-### Jobs and Queues
-
-### The /requests/ Channel
-
-### Subscriptions
-### Message History
+## Jobs, Claims, and Queues
 ### Keys
 ### Caching and Revisions
-### Message Claims
+
+# / The Root Channel
+# /sess/ The Session Channel
+# /presence/ The Presence Channel
+# /roster/ The Roster Channel  
+# /discovery/ The Discovery Channel (wait, what?)
+# /inbox/ The Inbox Channel
+# The /requests/ Channel
+
 
 ### Example Channel Configuration
 
@@ -311,7 +296,6 @@ To see all of your subscriptions at a user@server node, query their /subscriptio
         },
         keys: {
             count: 0,
-            ack: false,
             sortable: false,
             keyspace: [] // allowed keys, empty or unspecified is any
             enabled: true

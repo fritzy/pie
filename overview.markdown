@@ -52,6 +52,8 @@ Channels consist of the following components:
 
 ## Channel Patterns
 
+## Channel Events
+
 ## Creating a Channel
 
 OUT
@@ -335,6 +337,14 @@ To see all of your subscriptions at a user@server node, query their /subscriptio
         //this is a recursive subscription, but is limited to channels that include one of the feature tags listed
         //a server may update this list based on the service discovery profile
     }
+
+# How to set up Presence and Roster
+
+# How to have an ad-hoc Chat
+
+# How to have a formal Chat or other Session
+
+# How to have a multi-user Chat or other Session
 
 
 # Example Wire

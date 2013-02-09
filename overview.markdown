@@ -96,6 +96,7 @@ Event for users of the parent channel:
 ## Deleting a Channel
 
 OUT
+
     {to, from, id
         query: {
             ns: http://otalk.com/p/delete,

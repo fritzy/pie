@@ -138,6 +138,7 @@ Send a "get" to the channel you'd like to get messages from. You may you use \* 
 You may also specify ?keys ?channels ?messages, or a combination.
 You may also get subscriptions, if you have permission, with ?subscriptions
 You may also specify ?msgid= and ?key= to get a specific message.
+To filter messages by namespace, use ?ns=...
 You may filter by a specific message namespace with ?ns=
 Each result will contain the fields "from", "time", "msg", "channel", and "id" and may contain "key" and "claim" sections
 
@@ -193,13 +194,15 @@ You can subscribe to a channel, or a pattern of channels using \* wildcards.
 You may recieve an error, a result, or a pending notification.
 If you specify a from, you are linking the from channel with the to channel. Meaning all messages will get sent to the from channel.
 You may specify feature tags, which filters any wildcard channel subscriptions.
+You may only subscribe to certain channel parts with ?messages ?keys ?channels options in the to URI.
 
 OUT
 
     {to: romeo@montague.com/channel/subchannel, id: sub1,
         query: {
             ns: http://otalk.com/p/subscribe,
-            feature_tags: []
+            config: {
+            }
         }
     }
 
@@ -261,11 +264,39 @@ IN
         }
     }
 
+## Inviting to a Channel
+
 ## Getting Subscriptions
 
 To get the subscriptions (at least the ones you have access to) from a channel see  "Getting Channel Contents"
 To see all of your own subscriptions, get the messages from your own /subscriptions channel.
 To see all of your subscriptions at a user@server node, query their /subscriptions channel for messages. You probably only have access to see your own subscriptions in there.
+
+## ACL
+
+    channel_acl:
+
+        p: publish,
+        k: set/del own keys
+        K: set/del all keys
+        d: delete/revise own messages
+        D: delete all messages
+        c: read config
+        C: set config
+        m: moderate subscriptions
+        M: moderate permissions
+        s: subscribe and read messages and sub channel links
+        S: create sub channels (delete own)
+        L: delete sub channels
+        o: able to give permissions
+        O: able to give, remove op
+        a: owner-like admin
+
+    key_acl(optional):
+        r,w,d
+
+## Setting Permissions
+
 
 ## Jobs, Claims, and Queues
 ### Keys
@@ -281,73 +312,256 @@ To see all of your subscriptions at a user@server node, query their /subscriptio
 
 
 ### Example Channel Configuration
-
-    channel_config: {
-        subscriptions: {
-            refresh_time: 0, //0 is forever
-            presence: true, // you have to authorize the channel to have your presence as a sub_channel
-            transient: false, //remove subscription if they go offline.. presence must be true for this to work
-            allow_read: true, (allow other users to see the presence sub feeds are there)
-            allow_subscribe: true (allow others to subscribe to the presence subfeed)
-            presence_extensions: all, none, whitelist
-            allow_override: true, //have user send presence directly, rather than subscription to presence
+    
+    config: {
+        name: "The Alleyway",
+        description: "",
+        type: "http://otalk.com/p/muc",
+        discoverable: true, // now it's public
+        presence: "roster", // unspecified "roster" or "given"
+        proxy: {
+            enabled: true, //creates subchannel for the user to proxy messages and presence through
+            transient: false, //remove subscription (and proxy if enabled) if they go offline.. presence must be "given" or "roster" for this to be enforced from the provider.
+            permission: {
+                all: ...,
+                subscriber: ...,
+            }
+            include_presence: true, // link the presence of the user from roster or specified to [this-channel]/[proxy]/presence
+            include_inbox: true, // provide [this-channel]/[proxy]/inbox for private messages
+        }
+        msg_history: {
+            count: 0, 
         },
-        history: {
-            persist: "mem", // mem, hdd, none
-            count: 0,
-            expire: "oldest", //oldest, newest, none (send errors if more than count)
-            include: [msg, delete, claim, unclaim] // msg assumed
-        },
+        event_history: {
+            count: 20,
+        }
         keys: {
             count: 0,
-            sortable: false,
-            keyspace: [] // allowed keys, empty or unspecified is any
+            whitelist: [] // allowed keys, empty or unspecified is any
             enabled: true
         },
         revision: {
             count: 40,
             time: 3600,
-            diff: true,
-            playback: true
         },
-        queue: {
-            finished_enabled: true,
-            claim_enabled: true,
-            delete_on_finish: true,
-            claim_timeout,
-            cancel_limit,
-            failed_channel,
-        },
-        feature_tags: ["list", "of", "feature", "namespaces"],
+        enable_finish: false, 
+        enable_claim: false,
+        claim_timeout: 0,
+        cancel_limit: 0,
+        failed_channel: //
         owner: user@server/channel/path,
-        echo: false,
-        channel_whitelist: []
-        channel_blacklist: []
-        channel_tempban: [{user: '', time: 0},]
-        update: checksum/full/notify
+        permissions: {
+            all: ...,
+            subscriber: ...,
+            //this does not include any specific user's permissions, as that is separate
+        }
     }
 
 ### Example Subscription Configuration
 
     {
-        from_uri: "otalk:romeo@montague.com/sess/*/presence/*",
+        from_uri: "otalk:romeo@montague.com/sess/*/presence",
         to_uri: "otalk:juliet@capulet.com/roster/Romeo",
-        limit_tags: ["list", "of", "acceptable", "feature", "tags"],
-        sd_filter: true,
-        mute: false,
-        mute_on_offline: false,
-        //this is a recursive subscription, but is limited to channels that include one of the feature tags listed
-        //a server may update this list based on the service discovery profile
+        mute: false, //default: false
+        mute_on_offline: false, //default: false
+        revisions: true, //default: false
+        delivery: full, hash, notify // default: full
+        presence: [uri] // path to one of your channels that provides presence for that feed
+        proxy_channel: //short name of subchannel for proxying if proxying is enabled.
     }
+
+# Discovery
+
+Identities have a /channels directory in their root. They also have a /features channel in their session root (user@server/sess/\*/features).
+All channels marked as discoverable are listed in the /channels channel by the server.
+
+OUT
+    
+    {"to": "romeo@montague.com/discovery?ns=http://otalk.com/p/geo", "id": "getgeo1",
+        "get": {
+            "offset": 0,
+            "limit": 50
+        }
+    }
+
+IN
+
+    {"to": "romeo@montague.com/sess/Window_aabb", "from": "romeo@montague.com/discovery", "id": "getgeo1",
+        "result": {
+            "offset": 0,
+            "limit": 50,
+            "total": 2,
+            "results": [
+                {
+                    msg: {
+                        ns: http://otalk.com/p/geo#disco,
+                        channel: romeo@montague.com/geos/chopper,
+                        title: "Dah Choppah",
+                        description: "Get in dah choppah!"
+                    },
+                    channel: "romeo@montague.com/discovery",
+                    time:...,
+                    id: asdfasdf,
+                    from: romeo@montague.com
+                },
+                {
+                    msg: {
+                        ns: http://otalk.com/p/geo#disco,
+                        channel: romeo@montague.com/geos/cell,
+                        title: "Romeo's Celleo",
+                        description: "I'm probably where my phone is"
+                    },
+                    channel: "romeo@montague.com/discovery",
+                    time:...,
+                    id: asdfasdf2,
+                    from: romeo@montague.com
+                },
+            ]
+        }
+    }
+
 
 # How to set up Presence and Roster
 
+Your presence should be in a channel that is configured to keep one message containing the http://otalk.com/p/presence namespace.
+
+    msg: {
+        ns: http://otalk.com/p/presence,
+        show: available, away, na, xa, dnd, unavailable // default is available
+        status: "Some text about my presence" 
+    }
+
+By default, you SHOULD publish to your /sess/[current-session]/presence after login.
+You may have other presence channels that you could use for subscriptions (or other purposes) that are not tied to a session.
+
 # How to have an ad-hoc Chat
+
+You can send messages to a user's /inbox or /sess/\*/inbox (if you happen to know one of their current sessions). Chat messages should be in the namespace http://otalk.com/p/chat.
+
+    msg: {
+        ns: http://otalk.com/p/chat
+        subject: //optional text 255 or less chars
+        body: // message body
+        lang: // optional message language
+    }
 
 # How to have a formal Chat or other Session
 
+You can create a channel and invite a user.
+
+    {from: ..., to: .../newchannel,
+        query: {
+            ns: http://otalk/p/invite
+            channel: .../somechat
+            permission: ...
+        }
+    }
+
+Which will then send a message to their requests from the channel.
+    
+    {from: ..., to: .../newchannel,
+        msg: {
+            ns: http://otalk/p/invite
+            channel: .../somechat
+            permission: ...
+        }
+    }
+
+Invites create a subscription entry that is not yet enabled with +s (subscribable).
+
+
 # How to have a multi-user Chat or other Session
 
+A typical multi-user chat channel might have this configuration:
+
+OUT
+
+    {to: romeo@montague.com/alleyway, id: createroom1,
+        query: {
+            ns: http://otalk.com/p/create,
+            channel: otalk:user@server/channel/subchannel
+            config: {
+                name: "The Alleyway",
+                description: "",
+                type: "http://otalk.com/p/muc",
+                discoverable: true, // now it's public
+                presence: "roster", // unspecified "roster" or "given"
+                proxy: {
+                    enabled: true, //creates subchannel for the user to proxy messages and presence through
+                    transient: false, //remove subscription (and proxy if enabled) if they go offline.. presence must be "given" or "roster" for this to be enforced from the provider.
+                    permission: {
+                        all: ...,
+                        subscriber: ...,
+                    }
+                    include_presence: true, // link the presence of the user from roster or specified to [this-channel]/[proxy]/presence
+                    include_inbox: true, // provide [this-channel]/[proxy]/inbox for private messages
+                }
+                msg_history: {
+                    count: 0, 
+                },
+                event_history: {
+                    count: 20,
+                }
+                keys: {
+                    count: 0,
+                    whitelist: [] // allowed keys, empty or unspecified is any
+                    enabled: true
+                },
+                revision: {
+                    count: 40,
+                    time: 3600,
+                },
+                queue: {
+                    finished_enabled: true,
+                    claim_enabled: true,
+                    delete_on_finish: true,
+                    claim_timeout,
+                    cancel_limit,
+                    failed_channel,
+                },
+                owner: user@server/channel/path,
+                permissions: {
+                    all: ...,
+                    subscriber: ...,
+                    //this does not include any specific user's permissions, as that is separate
+                }
+            }
+        }
+    }
+
+IN
+
+    {to, from, id
+        response: {
+        }
+    }
+    
+
+Then a user could subscribe with:
+
+OUT
+
+    {to: romeo@montague.com/alleyway/*, id: sub1,
+        query: {
+            ns: http://otalk.com/p/subscribe,
+            config: {
+                to_uri: "otalk:juliet@capulet.com/",
+                mute_on_offline: true, //default: false
+                proxy_channel: "Juliet" //short name of subchannel for proxying if proxying is enabled.
+            }
+        }
+    }
+
+IN
+
+    {from: romeo@montague.com/alleyway, id: sub1,
+        response: {
+            ns: http://otalk.com/p/subscribe,
+            result: ok
+        }
+    }
+
+Now Juliet will start getting messages from the alleyway, and all of the users, including the subfeeds that she has permission to.
 
 # Example Wire
 

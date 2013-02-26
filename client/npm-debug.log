@@ -1,0 +1,86 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/fritzy/local/bin/node',
+1 verbose cli   '/Users/fritzy/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'bufferutil' ]
+2 info using npm@1.1.62
+3 info using node@v0.8.11
+4 verbose read json /Users/fritzy/package.json
+5 verbose read json /Users/fritzy/node_modules/async/package.json
+6 verbose read json /Users/fritzy/node_modules/cliff/package.json
+7 verbose read json /Users/fritzy/node_modules/colors/package.json
+8 verbose read json /Users/fritzy/node_modules/connect-redis/package.json
+9 verbose read json /Users/fritzy/node_modules/everyauth/package.json
+10 verbose read json /Users/fritzy/node_modules/express/package.json
+11 verbose read json /Users/fritzy/node_modules/hash_ring/package.json
+12 verbose read json /Users/fritzy/node_modules/http-proxy/package.json
+13 verbose read json /Users/fritzy/node_modules/jade/package.json
+14 verbose read json /Users/fritzy/node_modules/jslinux/package.json
+15 verbose read json /Users/fritzy/node_modules/ltx/package.json
+16 verbose read json /Users/fritzy/node_modules/markitup/package.json
+17 verbose read json /Users/fritzy/node_modules/mersenne/package.json
+18 verbose read json /Users/fritzy/node_modules/mothermayi/package.json
+19 verbose read json /Users/fritzy/node_modules/multipart/package.json
+20 verbose read json /Users/fritzy/node_modules/multipart-parser/package.json
+21 verbose read json /Users/fritzy/node_modules/mysql/package.json
+22 verbose read json /Users/fritzy/node_modules/node-arguments/package.json
+23 verbose read json /Users/fritzy/node_modules/node-proxy/package.json
+24 verbose read json /Users/fritzy/node_modules/node-stringprep/package.json
+25 verbose read json /Users/fritzy/node_modules/node-uuid/package.json
+26 verbose read json /Users/fritzy/node_modules/node-xmpp/package.json
+27 verbose read json /Users/fritzy/node_modules/nvm/package.json
+28 verbose read json /Users/fritzy/node_modules/oauth/package.json
+29 verbose read json /Users/fritzy/node_modules/padlock/package.json
+30 verbose read json /Users/fritzy/node_modules/parsnip/package.json
+31 verbose read json /Users/fritzy/node_modules/redis/package.json
+32 verbose read json /Users/fritzy/node_modules/request/package.json
+33 verbose read json /Users/fritzy/node_modules/simpleriak/package.json
+34 verbose read json /Users/fritzy/node_modules/socket.io/package.json
+35 verbose read json /Users/fritzy/node_modules/socket.io-client/package.json
+36 verbose read json /Users/fritzy/node_modules/thoonk/package.json
+37 verbose read json /Users/fritzy/node_modules/uuid/package.json
+38 verbose read json /Users/fritzy/node_modules/wildemitter/package.json
+39 verbose read json /Users/fritzy/node_modules/winston/package.json
+40 verbose read json /Users/fritzy/node_modules/ws/package.json
+41 warn package.json jade@0.22.1 No README.md file found!
+42 warn package.json mersenne@0.0.3 No README.md file found!
+43 warn package.json uuid@0.0.2 No README.md file found!
+44 verbose read json /Users/fritzy/package.json
+45 verbose cache add [ 'bufferutil', null ]
+46 silly cache add name=undefined spec="bufferutil" args=["bufferutil",null]
+47 verbose parsed url { pathname: 'bufferutil',
+47 verbose parsed url   path: 'bufferutil',
+47 verbose parsed url   href: 'bufferutil' }
+48 silly lockFile cae2fe9c-bufferutil bufferutil
+49 verbose lock bufferutil /Users/fritzy/.npm/cae2fe9c-bufferutil.lock
+50 silly lockFile cae2fe9c-bufferutil bufferutil
+51 verbose addNamed [ 'bufferutil', '' ]
+52 verbose addNamed [ null, '' ]
+53 silly lockFile 90b7b161-bufferutil bufferutil@
+54 verbose lock bufferutil@ /Users/fritzy/.npm/90b7b161-bufferutil.lock
+55 silly addNameRange { name: 'bufferutil', range: '', hasData: false }
+56 verbose url raw bufferutil
+57 verbose url resolving [ 'https://registry.npmjs.org/', './bufferutil' ]
+58 verbose url resolved https://registry.npmjs.org/bufferutil
+59 info trying registry request attempt 1 at 15:42:21
+60 http GET https://registry.npmjs.org/bufferutil
+61 http 404 https://registry.npmjs.org/bufferutil
+62 silly registry.get cb [ 404,
+62 silly registry.get   { server: 'CouchDB/1.2.1 (Erlang OTP/R15B)',
+62 silly registry.get     date: 'Tue, 12 Feb 2013 23:40:24 GMT',
+62 silly registry.get     'content-type': 'application/json',
+62 silly registry.get     'content-length': '52',
+62 silly registry.get     'cache-control': 'must-revalidate' } ]
+63 silly lockFile 90b7b161-bufferutil bufferutil@
+64 error 404 'bufferutil' is not in the npm registry.
+64 error 404 You should bug the author to publish it
+64 error 404
+64 error 404 Note that you can also install from a
+64 error 404 tarball, folder, or http url, or git url.
+65 error System Darwin 12.2.1
+66 error command "/Users/fritzy/local/bin/node" "/Users/fritzy/local/bin/npm" "install" "bufferutil"
+67 error cwd /Users/fritzy/dev/otalk/client
+68 error node -v v0.8.11
+69 error npm -v 1.1.62
+70 error code E404
+71 verbose exit [ 1, true ]

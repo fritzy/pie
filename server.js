@@ -67,6 +67,9 @@ function OTalkServer(config) {
                 console.log("Unknown payload type.");
             }
         }.bind(this));
+        ws.on('error', function(e) {
+            console.log("error", e);
+        }.bind(this));
     }.bind(this));
 
 }

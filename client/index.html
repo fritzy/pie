@@ -47,7 +47,7 @@ function oTalk(conn_uri, user_uri, session) {
             console.log("RECV:", msg.data);
             var jmsg = JSON.parse(msg.data);
             if (jmsg.hasOwnProperty('response') && jmsg.response.hasOwnProperty('id') && this.queries.hasOwnProperty(jmsg.response.id)) {
-                this.queries[jmsg.response.id].call(this, cb);
+                this.queries[jmsg.response.id].call(this, jmsg);
                 delete this.queries[jmsg.response.id];
             }
         }.bind(this);
@@ -82,16 +82,20 @@ function oTalk(conn_uri, user_uri, session) {
 
 }).call(oTalk.prototype);
 
-var im = new oTalk('ws://localhost:8080/', 'nathan@andyet.net', 'funtimes');
+var im = new oTalk('ws://localhost:8080/', window.location.hash.substring(1) + '@andyet.net', 'funtimes');
 
 im.connect(function() {
     im.bind(function(reply) {
-        console.log("got bind back");
+        console.log("Bound as", reply.response.bind);
         im.createChannel('nathan@andyet.net/test32', {}, function (reply) {
-            console.log("got create back");
+            if (reply.response.hasOwnProperty('error')) {
+                console.log(reply.response.error.text);
+            } else {
+                console.log("Channel created.");
+            }
             im.subscribe('nathan@andyet.net/test32', function (reply) {
-                console.log("got subscribe back");
-                im.chat('nathan@andyet.net/test32', 'Hey there!');
+                console.log("Subscribed");
+                console.log('----------READY----------');
             });
         });
     });

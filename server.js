@@ -4,6 +4,7 @@ var express      = require('express');
 var EventEmitter = require('events').EventEmitter;
 var thoonk       = require('thoonk');
 var uuid         = require('node-uuid');
+var Warp = require('./warp');
 
 var app = express();
 

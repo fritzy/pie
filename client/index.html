@@ -102,48 +102,6 @@ im.connect(function() {
 });
 
 
-/*
-var ws = new WebSocket("ws://localhost:8080/");
-
-ws.onopen = function() {
-    ws.onmessage = function(msg) {
-        console.log(JSON.parse(msg.data));
-    };
-    ws.send(JSON.stringify(
-    {from: "nathan@andyet.net", to: "andyet.net", query: {
-            ns: "http://otalk.com/p/bind",
-            bind: 'nathan@andyet.net/sess/testing'
-        }
-    }
-    ));
-
-    ws.send(JSON.stringify(
-    {from: "nathan@andyet.net", to: "nathan@andyet.net/test", query: {
-            ns: "http://otalk.com/p/create",
-            config: {},
-        }
-    }
-    ));
-    
-    ws.send(JSON.stringify(
-    {from: "nathan@andyet.net", to:"nathan@andyet.net/test", query: {
-            ns: "http://otalk.com/p/subscribe",
-        }
-    }
-    ));
-
-    setTimeout(function () {
-    
-        ws.send(JSON.stringify(
-        {from: "nathan@andyet.net", to:"nathan@andyet.net/test", msg: {
-                ns: "http://otalk.com/p/chat",
-                body: "Hi there!"
-            }
-        }
-        ));
-    }, 3000);
-};
-*/
 </script>
     </body>
 </html>

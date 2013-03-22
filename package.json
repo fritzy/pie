@@ -1,0 +1,19 @@
+{
+  "name": "otalk",
+  "version": "0.0.1",
+  "description": "otalk server",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/andyet/otalk.git"
+  },
+  "author": "Nathan Fritz <nathan@andyet.net>",
+  "private": true,
+  "dependencies": {
+    "xmlhttprequest": "~1.5.0",
+    "node-uuid": "~1.4.0",
+    "redis": "~0.8.2",
+    "ws": "~0.4.25",
+    "thoonk": "git://github.com/fritzy/thoonk.js.git#scripting",
+    "express": "~3.1.0"
+  }
+}

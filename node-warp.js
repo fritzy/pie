@@ -12293,7 +12293,6 @@ self.onresize = function()
 }
 */
 
-module.exports = Warp;
 
 
 
@@ -12322,7 +12321,10 @@ Warp.on({
     }
 });
 
+module.exports = {Warp: Warp, _checkLoaded: _checkLoaded};
+/*
 sub = Warp.subscribe({to: "warp://warp:netevents/public/user@server/some/"}, function(message) {
     console.log("GOT MESSAGE", message.object.thingy);
 });
 console.log(sub);
+*/

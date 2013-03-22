@@ -87,13 +87,13 @@ var im = new oTalk('ws://localhost:8080/', window.location.hash.substring(1) + '
 im.connect(function() {
     im.bind(function(reply) {
         console.log("Bound as", reply.response.bind);
-        im.createChannel('nathan@andyet.net/test32', {}, function (reply) {
+        im.createChannel('nathan@andyet.net/testchat', {}, function (reply) {
             if (reply.response.hasOwnProperty('error')) {
                 console.log(reply.response.error.text);
             } else {
                 console.log("Channel created.");
             }
-            im.subscribe('nathan@andyet.net/test32', function (reply) {
+            im.subscribe('nathan@andyet.net/testchat', function (reply) {
                 console.log("Subscribed");
                 console.log('----------READY----------');
             });

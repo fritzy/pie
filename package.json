@@ -1,0 +1,19 @@
+{
+  "name": "pied",
+  "version": "0.1.0",
+  "homepage": "https://github.com/fritzy/pied",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:fritzy/pied.git"
+  },
+  "description": "Personal, Identity-based Eventing Server",
+  "dependencies": {
+    "deputydb": "*",
+    "async": "*",
+    "browserid": "git+https://github.com/mozilla/browserid.git#dev"
+  },
+  "scripts": {
+    "test": "node tests/test.js"
+  },
+  "main": "index.js"
+}

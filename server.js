@@ -4,28 +4,44 @@ var replify = require('replify');
 var minimist = require('minimist');
 var async = require('async');
 var colors = require('colors');
+var bucker = require('bucker');
+var log = bucker.createLogger({app: 'server.log', console: true}, 'main');
 
 function PieRepl(pie) {
+    log.info("Starting...");
     this.pie = pie;
     this.crap = 1;
     var repli = this;
 
     this.func_usage = {
         createUser: "createUser [user] [domain] [password]",
+        generateToken: 'getToken [user] [domain]',
     };
     this.funcs = {
         createUser: function(user, domain, pass, cb) {
-            repli.pie.db.auth(domain).create(user, pass, cb);
+            repli.pie.db.auth(domain).create(user, pass, function (err, reply) {
+                if(!err) {
+                    cb(false, "User added.");
+                } else {
+                    cb(true, "hello?");
+                }
+            });
         }.bind(this),
+        generateToken: function (user, domain, cb) {
+            repli.pie.db.auth(domain).getToken(user, '', function (err, token) {
+                console.log("done");
+                cb(err, token);
+            }, true);
+        },
         help: function (cb) {
-            var desc = "";
-            async.each(Object.keys(repli.func_usage), function(fname, acb) {
+            async.reduce(Object.keys(repli.func_usage), '', function(desc, fname, acb) {
+                desc += '\n';
                 desc += fname.green.bold + ": " + "\n  " + repli.func_desc[fname];
                 desc += '\n  Usage: '.red + repli.func_usage[fname];
                 desc += '\n';
-                acb();
+                acb(false, desc);
             },
-            function (err) {
+            function (err, desc) {
                 cb(false, desc);
             });
         },
@@ -33,6 +49,7 @@ function PieRepl(pie) {
     
     this.func_desc = {
         createUser: "Create a new local user.",
+        generateToken: "Generate token for user."
     }
 }
 
@@ -54,7 +71,7 @@ function evaler(cmd, ctx, filename, cb) {
             try {
                 func.apply(ctx, args.slice(1));
             } catch (e) {
-                cb(true, e.description);
+                throw e;
             }
         } else {
             cb(false, "Usage: " + ctx.func_usage[args[0]]);
@@ -69,4 +86,3 @@ function writer(thing) {
 }
 
 replify({name: 'pie', path: __dirname, eval: evaler, writer: writer}, server.exp, new PieRepl(server));
-

@@ -39,7 +39,8 @@ The config:
         event_count: 50,
         key_whitelist: [],
         subscriber_channel: true, // gives each user a subchannel to publish to that all par all_acl: .., // acl flag string
-        subscriber_acl: ..., // subscriber flag string.
+        public_acl: ..., // public flag string.
+        access_tags: [], // tags that if any are included in the relationship access tags, read and subscribe access are assumed
     }
 
 # User Story
@@ -54,7 +55,7 @@ Jill's client wants to discover Bob's pie service.
 
     RESPONSE:
     {
-        pie_root: https://smith.fam/pie,
+        http_root: https://smith.fam/pie,
         websocket: https://smith.fam/pie
     }
 
@@ -127,7 +128,7 @@ Now Bob's server will attempt to notify Jill.
 
     RESPONSE:
     {
-        pie_root: https://freehosting.net/pie,
+        http_root: https://freehosting.net/pie,
         websocket: https://freehosting.net/pie
     }
 
@@ -165,7 +166,7 @@ Jill wants to see what photo galleries/channels Bob has.
     POST https://smith.fam/pie?rpc=discover
 
     {
-        channel_type: 'image'
+        channel_type: 'urn:pie:image'
     }
     
     RESPONSE:
@@ -180,10 +181,11 @@ Jill wants to see what photo galleries/channels Bob has.
     }
 
 Jill suspects that Bob would share more photos with her if she asked, so she does.
+Ideally, one of the access\_tags that Bob set for his relationship with Jill should be included in the channels he would grant her access to, but this is a less ideal scenario. As such, Jill's going to see what other image channels Bob might give her access to.
 
     POST https://smith.fam/pie?rpc=grantAccess
     {
-        channel_type: 'image',
+        channel_type: 'urn:pie:image',
         msg: "Hi Bob. You mentioned that you had family photos posted for your beach trip. Mind sharing?",
         access: 'item:+r',
     }
@@ -191,7 +193,7 @@ Jill suspects that Bob would share more photos with her if she asked, so she doe
     RESPONSE:
     {
         id: 'req:grant:aabbccdd',
-        channel_type: 'image',
+        channel_type: 'urn:pie:image',
         msg: "Hi Bob. You mentioned that you had family photos posted for your beach trip. Mind sharing?"
         access: 'item:+r',
         status: 'pending'
@@ -201,10 +203,9 @@ Bob's client, if logged in gets an event:
 
     {
         event_type: 'grantAccess',
-        channel_type: 'image',
+        channel_type: 'urn:pie:image',
         who: 'jill@freehosting.net',
         id: 'req:sug:aabbccdd',
-        sub_type: 'suggestion',
         access: 'item:+r',
         status: 'pending',
     }
@@ -218,10 +219,9 @@ Or Bob may later query his pending requests.
         requests: [
             {
                 event_type: 'grantAccess',
-                channel_type: 'image',
+                channel_type: 'urn:pie:image',
                 who: 'jill@freehosting.net',
                 id: 'req:sug:aabbccdd',
-                sub_type: 'suggestion',
                 access: 'item:+r',
                 status: 'pending',
             }
@@ -264,3 +264,156 @@ Bob's server now informs Jill's server of the request.
 Her ACL grant request is allowed, and appropriate ACL events are sent to channel subscribers for each channel.
 
 Jill, now being given access, will now be able to discover, subscribe, and read data from those channels.
+
+Jill wants to know when Bob has new photos for his family, so she creates a local channel for Bob, and then one for his pictures.
+
+    POST "https://freehosting.net/pie/jill/roster/Bob%20Smith?type=channel"
+    {
+        Name: "Bob Smith",
+    }
+    
+    POST "https://freehosting.net/pie/jill/roster/Bob%20Smith/fampictures?type=channel"
+    {
+        Name: "Bob Smith's Family Pictures",
+    }
+
+In order to get updates on Bob's pictures, she requests a channel subscription.
+
+    POST "https://freehosting.net/pie/jill/roster/Bob%20Smith/fampictures?rpc=channelSubscription"
+    {
+        remote: 'bob@smith.fam/images/family/*',
+    }
+
+This does two things. 1. It gives bob@smith.fam write access to this channel. 2. It sends a subscription request.
+
+The server sends the request for Jill.
+
+    POST "https://smith.fam/bob/images/family?rpc=subscribe"
+    {
+        sub_type: 'channel',
+        recursive: true,
+        remote: 'jill@freehosting.net/roster/Bob%20Smith/fampictures',
+        send_file: false,
+    }
+
+    Response:
+    {
+        id: 'req:sub:ddffeeee',
+        request: 'subscribe',
+        sub_type: 'channel',
+        recursive: true,
+        remote: 'jill@freehosting.net/roster/Bob%20Smith/fampictures',
+        send_file: false,
+        status: 'approved',
+    }
+
+Since Jill already has subscribe and read access, her subscription is automatically approved.
+Now whenever a new item is published to that channel, Bob's server will POST it to Jill's channel.
+
+    POST "https://freehosting.net/roster/Bob%20Smith/fampictures/?type=item&sub=req:sub:ddffeeee"
+    {
+        ns: 'urn:pie:image',
+        name: "Beach Trip Day 2"
+        tags: [],
+        file: 'pie:bob@smith.fam/images/family/?type=file&id=asdfalkjsdf',
+    }
+
+Jill's server confirms the subscription matches the source, and adds the item. If Jill is subscribed to her own channel, she will get a createItem event.
+If she had set send\_file: true, then a file would have been POSTed as well, but instead it is remotely referred to.
+
+Jill can now review the item.
+
+    GET "https://freehosting.net/roster/Bob%20Smith/fampictures/?type=item&expand=true"
+    {
+        items: [
+            {
+                from: 'bob@smith.fam/images/family',
+                posted: '[iso time here]'
+                item: {
+                    ns: 'urn:pie:image',
+                    name: "Beach Trip Day 2"
+                    tags: [],
+                    file: 'pie:bob@smith.fam/images/family/?type=file&id=asdfalkjsdf',
+                }
+        ]
+    }
+
+Keep in mind, the from is from the channel it was posted from according to the subscription, and the posted time is from the remote POST time, not the original creation.
+
+Alternatively, Jill could have done a user subscription to remote channel directly, and gotten events over websockets, xhr, or polled with ?rpc=getEvents&since=last without involving her own server at all.
+
+# Happy Case User Scenario
+
+Jill would now like Bob's contact. Bob has 3 contacts /contact/personal, /contact/work, /contact/public.
+He's configured /contact/personal with access\_tags: ['friend', 'family'], /contact/public's public\_acl is: 's|r|r|' meaning that the public may subscribe, read channels, and read items, but not do anything with ACL.
+So, when Jill goes to discover contacts, she gets these two.
+
+    POST https://smith.fam/pie?rpc=discover
+
+    {
+        channel_type: 'urn:pie:contact'
+    }
+    
+    RESPONSE:
+    {
+        channels: [
+            '/contact/public',
+            '/contact/personal'
+        ],
+        count: 2,
+        total: 2,
+        offset: 0,
+        limit: 50
+    }
+
+She then does a user subscription to the personal contact.
+
+    POST https://smith.fam/pie/contact/personal?rpc=subscribe
+    {
+        type: 'user'
+    }
+
+    Response:
+    {
+        type: 'user', 
+        id: 'sub:ajlasdjfsa',
+        status: 'approved',
+        channel: '/contact/personal'
+    }
+
+She may then listen on a websocket for changes directly to the remote server.
+
+wss://smith.fam/pie
+
+>>>
+    {
+        id: 'auth1',
+        browserid_token: 'alksdjf',
+        rpc: 'browserIdAuth',
+    }
+
+<<<
+
+    {
+        id: 'auth1',
+        authed: true,
+    }
+
+>>>
+    {
+        id: 'subs1',
+        rpc: enableSubscriptions,
+        subscriptions: ['sub:ajlasdjfsa']
+        since: last,
+    }
+
+<<<
+    {
+        id: 'subs1',
+        subscriptions: ['sub:ajlasdjfsa/someeventid']
+    }
+
+<<<
+    //events, since that event id start coming through
+    
+

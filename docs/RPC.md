@@ -107,6 +107,9 @@ Same as allow, but it changes the `status` to "denied".
 ### requestAccess
 
     acl: acl string described in ACL.md
+    content: content urn
+
+If no channel is specified in the url path, the content urn is required, and this acts as a way of requesting to the user access to types of material, like their contact, for example.
 
 ### acceptAccess
 
@@ -144,16 +147,56 @@ A responseEvent is generated, containing the subscription as the `event` payload
 
 ### discover
 
+Discover which channels you have read access to of a given content namespace.
+
+Query parameters: offset, limit
+
+    content: content type namespace
+
+Response:
+
+    content: content type namespace
+    channels: array of channel objects
+        name: string
+        description: string
+        acl: user acl
+    count: number returned
+    offset: number offset
+    total: total results potentially returned
+    limit: user set or default limit per page
+
 ### getRelationship
 
 Returns the relationship-request model.
 
 ### getAccess
 
+Get the ACL string of access for your user on a specific channel.
+No body is required.
+
+The response:
+    
+    acl: ACL string of calculated access
+
 ### updateAccess
 
-### getSubscription
+If you have 'm'oderate ACL, then you may give other users up to your access (but no more than).
 
+    user: user@server of access
+    acl: new explicit acl of user
+
+### getSubscriptions
+
+Equivelant to GET /user/channel/path?type=subscription unless a channel is not specified in the path.
+
+Query parameters: offset, limit
+
+    subscriptions: array of subscription objects
+    count: number returned
+    offset: number offset
+    total: total results potentially returned
+    limit: user set or default limit per page
+    
 ### responseEvent
 
 For remote servers responding to events, an event is generated if the server decides to do so, containing the payload of this as the `event` payload.

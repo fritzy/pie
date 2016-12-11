@@ -1,0 +1,14 @@
+SET     [id]::channels
+HASH    [id]::channel.config::[channel]
+HASH    [id]::channel.subscriptions::[channel]
+HASH    [id]::channel.proxy_subscriptions::[channel]
+SET     [id]::channel.children::[channel]
+STRING  [id]::channel.parent::[channel]
+ZSET    [id]::channel.msg_ids::[channel]
+HASH    [id]::channel.msg_items::[channel]
+HASH    [id]::channel.msg_meta::[channel]
+
+PUBSUB  [id][channel]
+
+SET     [id]::user.subscriptions
+

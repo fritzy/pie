@@ -1,0 +1,107 @@
+<html>
+    <body>
+        Hi There!
+
+        <script>
+
+
+function oTalk(conn_uri, user_uri, session) {
+    this.conn = {
+        websocket: conn_uri,
+        user: user_uri,
+        session: session
+    };
+
+    this.qid = 0;
+
+
+    this.queries = {};
+
+
+}
+
+(function () {
+
+    this.query = function (stanza, cb) {
+        this.qid++;
+        this.queries[this.qid] = cb;
+        stanza.query.id = this.qid;
+        console.log("SEND:", stanza);
+        this.ws.send(JSON.stringify(stanza));
+    };
+
+    this.bind = function (cb) {
+        this.query(
+            {from: this.conn.user, to: "andyet.net", query: {
+                    ns: "http://otalk.com/p/bind",
+                    bind: this.conn.user + "/sess/" + this.conn.session,
+                }
+            }, cb
+        );
+    };
+
+    this.connect = function (cb) {
+        this.ws = new WebSocket(this.conn.websocket);
+
+        this.ws.onmessage = function (msg) {
+            console.log("RECV:", msg.data);
+            var jmsg = JSON.parse(msg.data);
+            if (jmsg.hasOwnProperty('response') && jmsg.response.hasOwnProperty('id') && this.queries.hasOwnProperty(jmsg.response.id)) {
+                this.queries[jmsg.response.id].call(this, jmsg);
+                delete this.queries[jmsg.response.id];
+            }
+        }.bind(this);
+
+        this.ws.onopen = cb;
+    };
+
+    this.disconnect = function () {
+    };
+
+    this.setPresence = function () {
+    };
+
+    this.getRoster = function () {
+    };
+
+    this.createChannel = function (channel, config, cb) {
+        this.query({to: channel, query: {ns: 'http://otalk.com/p/create', config: {}}}, cb);
+    };
+
+    this.subscribe = function (channel, cb) {
+        this.query({to: channel, query: {ns: 'http://otalk.com/p/subscribe', }}, cb);
+    };
+
+    this.sendMsg = function () {
+    };
+
+    this.chat = function (channel, msg) {
+        console.log("SEND MSG:", channel, msg);
+        this.ws.send(JSON.stringify({to: channel, msg: {ns:'http://otalk.com/p/chat', body: msg}}));
+    };
+
+}).call(oTalk.prototype);
+
+var im = new oTalk('ws://localhost:8080/', window.location.hash.substring(1) + '@andyet.net', 'funtimes');
+
+im.connect(function() {
+    im.bind(function(reply) {
+        console.log("Bound as", reply.response.bind);
+        im.createChannel('nathan@andyet.net/testchat', {}, function (reply) {
+            if (reply.response.hasOwnProperty('error')) {
+                console.log(reply.response.error.text);
+            } else {
+                console.log("Channel created.");
+            }
+            im.subscribe('nathan@andyet.net/testchat', function (reply) {
+                console.log("Subscribed");
+                console.log('----------READY----------');
+            });
+        });
+    });
+});
+
+
+</script>
+    </body>
+</html>

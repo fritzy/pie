@@ -18,30 +18,30 @@ function PieRepl(pie) {
         generateToken: 'getToken [user] [domain]',
     };
     this.funcs = {
-        createUser: function(user, domain, pass, cb) {
-            repli.pie.db.auth(domain).create(user, pass, function (err, reply) {
+        createUser: (user, domain, pass, cb) => {
+            repli.pie.db.auth(domain).create(user, pass, (err, reply) => {
                 if(!err) {
                     cb(false, "User added.");
                 } else {
                     cb(true, "hello?");
                 }
             });
-        }.bind(this),
-        generateToken: function (user, domain, cb) {
-            repli.pie.db.auth(domain).getToken(user, '', function (err, token) {
+        },
+        generateToken(user, domain, cb) {
+            repli.pie.db.auth(domain).getToken(user, '', (err, token) => {
                 console.log("done");
                 cb(err, token);
             }, true);
         },
-        help: function (cb) {
-            async.reduce(Object.keys(repli.func_usage), '', function(desc, fname, acb) {
+        help(cb) {
+            async.reduce(Object.keys(repli.func_usage), '', (desc, fname, acb) => {
                 desc += '\n';
                 desc += fname.green.bold + ": " + "\n  " + repli.func_desc[fname];
                 desc += '\n  Usage: '.red + repli.func_usage[fname];
                 desc += '\n';
                 acb(false, desc);
             },
-            function (err, desc) {
+            (err, desc) => {
                 cb(false, desc);
             });
         },
@@ -85,5 +85,5 @@ function writer(thing) {
     return thing;
 }
 
-replify({name: 'pie', path: __dirname, eval: evaler, writer: writer}, server.exp, new PieRepl(server));
+replify({name: 'pie', path: __dirname, eval: evaler, writer}, server.exp, new PieRepl(server));
 
